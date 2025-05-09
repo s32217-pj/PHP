@@ -1,5 +1,8 @@
 <?php
+include 'login_utils.php';
+
 error_reporting(E_ERROR | E_PARSE); //show only normal errors and parsing errors. Otherwise we will get warning if file does not exist, which we handle
+require_login();
 
 $csvData = null;
 $error = null;

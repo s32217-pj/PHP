@@ -2,7 +2,10 @@
  -->
 
 <?php
+include 'login_utils.php';
+
 session_start(); //start session to get reservation cookie
+require_login();
 
 // Check if reservation data exists in the session
 if (!isset($_SESSION['reservation'])) {
