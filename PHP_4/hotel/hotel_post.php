@@ -7,7 +7,7 @@ if ($_SERVER["REQUEST_METHOD"] != "POST") //only post request are supported
 //save form to cookie
 foreach ($_POST as $key => $value) {
     if (is_array($value))
-        setcookie($key, json_encode($value), time() + 60*60*24, "/hotel.php"); // 30 dni
+        setcookie($key, json_encode($value), time() + 60*60*24, "hotel.php"); // 30 dni
      else
         setcookie($key, $value, time() + 60*60*24, "hotel.php");
 }

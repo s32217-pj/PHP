@@ -1,7 +1,6 @@
-<!--Uwaga! Wygląd strony został wygenerowany CZĘŚCIOWO przez AI, niektóre rzeczy poprawiłem samodzielnie, gdyż wyglądały średnio
- -->
-
  <?php
+    include_once "login_utils.php";
+    require_login();
 
     //return string value of cookie or decoded json map
     function getCookieValue($name) {
@@ -32,7 +31,6 @@
 
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -41,8 +39,15 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.13.1/css/bootstrap-select.min.css"
         rel="stylesheet">
 </head>
-
-<body class="bg-light py-5">
+<body class="bg-light pb-5">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-5">
+        <div class="container">
+            <span class="navbar-text text-white mr-auto">
+                <strong>Admin</strong>
+            </span>
+            <a href="logout.php" class="btn btn-outline-light">Wyloguj</a>
+        </div>
+    </nav>
 
     <div class="container">
         <h2 class="text-center mb-4">Rezerwacja pokoju hotelowego</h2>
@@ -51,7 +56,7 @@
             <!-- Ilość osób -->
             <div class="form-group">
                 <label for="people-count">Ilość osób</label>
-                <input type="number" name="people-count" id="people-count" class="form-control" min="1" max="4"
+                <input type="number" name="people-count" id="people-count" class="form-control" min="1" max="4" <?php if(getCookieValue('people-count')) echo 'value='.getCookieValue('people-count'); ?>
                     required>
             </div>
 
@@ -143,10 +148,13 @@
             <!-- Buttons -->
             <div class="container mt-2">
                 <div class="row">
-                    <div class="col-6 mb-2">
+                    <div class="col-4 mb-2">
                         <button type="submit" class="btn btn-primary w-100">Zarezerwuj</button>
                     </div>
-                    <div class="col-6 mb-2">
+                    <div class="col-4 mb-2">
+                        <input type="reset" class="btn btn-primary w-100" value="Wyczyść formularz">
+                    </div>
+                    <div class="col-4 mb-2">
                         <button class="btn btn-primary w-100" id="btn-show-data">Wyświetl Dane</button>
                     </div>
                 </div>
@@ -168,6 +176,74 @@
 
     <script>
 
+        function setPeopleCount(){
+                    let peopleCountInput = $('#people-count');
+                    let peopleCount = parseInt(peopleCountInput.val()) || 0;
+                    
+                    let peopleDetailsContainer = $("#people-details");
+                    peopleDetailsContainer.empty(); // Wyczyść stare pola
+
+                    // Pobierz dane z ciasteczek (jeśli istnieją)
+                    let cookieNames = [];
+                    let cookieSurnames = [];
+
+                    try {
+                        if (document.cookie.includes("people-names")) {
+                            cookieNames = JSON.parse($.cookie("people-names"));
+                        }
+                        if (document.cookie.includes("people-surnames")) {
+                            cookieSurnames = JSON.parse($.cookie("people-surnames"));
+                        }
+                    } catch (e) {
+                        console.warn("Error while parsing cookies:", e);
+                    }
+
+                    // Tworzenie pól formularza
+                    for (let i = 0; i < peopleCount; i++) {
+                        let container = $("<fieldset>").addClass("border p-3 mb-4")
+                            .append($("<legend>").text("Osoba " + (i + 1)));
+                        let personDiv = $("<div>").addClass("form-group row");
+
+                        // Imię
+                        let nameContainer = $("<div class='col-md-6'>");
+                        let nameLabel = $("<label>").attr("for", "person-name-" + (i + 1)).text("Imię");
+                        let nameInput = $("<input>").attr({
+                            "type": "text",
+                            "class": "form-control",
+                            "name": "people-names[]",
+                            "required": true,
+                            "value": cookieNames[i] || ""
+                        });
+
+                        // Nazwisko
+                        let surnameContainer = $("<div class='col-md-6'>");
+                        let surnameLabel = $("<label>").attr("for", "person-surname-" + (i + 1)).text("Nazwisko");
+                        let surnameInput = $("<input>").attr({
+                            "type": "text",
+                            "class": "form-control",
+                            "name": "people-surnames[]",
+                            "required": true,
+                            "value": cookieSurnames[i] || ""
+                        });
+
+                        nameContainer.append(nameLabel, nameInput);
+                        surnameContainer.append(surnameLabel, surnameInput);
+                        personDiv.append(nameContainer, surnameContainer);
+                        container.append(personDiv);
+                        peopleDetailsContainer.append(container);
+            }
+        }
+
+        function resetForm(){
+            $("form")[0].reset();
+            $("#people-details").empty();
+            $('.selectpicker').val([]).selectpicker('refresh');
+
+            var cookies = $.cookie();
+            for(var cookie in cookies)
+                $.removeCookie(cookie);
+        }
+
         //show data button listener
         $("#btn-show-data").on('click', function() {
             window.location.href = "hotel_show_data.php";
@@ -176,65 +252,12 @@
         // Initialize Bootstrap-Select
         $(document).ready(function () {
             $('.selectpicker').selectpicker();
+            setPeopleCount(); //cookie might be set, we want to set in on ready as well
         });
 
-        $("#people-count").on("input", function () {
-                let peopleCount = parseInt(this.value) || 0;
-                let peopleDetailsContainer = $("#people-details");
-                peopleDetailsContainer.empty(); // Wyczyść stare pola
-
-                // Pobierz dane z ciasteczek (jeśli istnieją)
-                let cookieNames = [];
-                let cookieSurnames = [];
-
-                try {
-                    if (document.cookie.includes("people-names")) {
-                        cookieNames = JSON.parse($.cookie("people-names"));
-                    }
-                    if (document.cookie.includes("people-surnames")) {
-                        cookieSurnames = JSON.parse($.cookie("people-surnames"));
-                    }
-                } catch (e) {
-                    console.warn("Error while parsing cookies:", e);
-                }
-
-                // Tworzenie pól formularza
-                for (let i = 0; i < peopleCount; i++) {
-                    let container = $("<fieldset>").addClass("border p-3 mb-4")
-                        .append($("<legend>").text("Osoba " + (i + 1)));
-                    let personDiv = $("<div>").addClass("form-group row");
-
-                    // Imię
-                    let nameContainer = $("<div class='col-md-6'>");
-                    let nameLabel = $("<label>").attr("for", "person-name-" + (i + 1)).text("Imię");
-                    let nameInput = $("<input>").attr({
-                        "type": "text",
-                        "class": "form-control",
-                        "name": "people-names[]",
-                        "required": true,
-                        "value": cookieNames[i] || ""
-                    });
-
-                    // Nazwisko
-                    let surnameContainer = $("<div class='col-md-6'>");
-                    let surnameLabel = $("<label>").attr("for", "person-surname-" + (i + 1)).text("Nazwisko");
-                    let surnameInput = $("<input>").attr({
-                        "type": "text",
-                        "class": "form-control",
-                        "name": "people-surnames[]",
-                        "required": true,
-                        "value": cookieSurnames[i] || ""
-                    });
-
-                    nameContainer.append(nameLabel, nameInput);
-                    surnameContainer.append(surnameLabel, surnameInput);
-                    personDiv.append(nameContainer, surnameContainer);
-                    container.append(personDiv);
-                    peopleDetailsContainer.append(container);
-                }
-});
-
-
+        //EVENT LISTENERS
+        $("#people-count").on("input", setPeopleCount);
+        $("input[type='reset']").on("click", resetForm);
     </script>
 </body>
 
